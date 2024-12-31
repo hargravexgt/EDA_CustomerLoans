@@ -116,6 +116,7 @@ class DataFrameTransformer:
     def impute_col_with_median(self, df, col):
         df[col] = df[col].fillna(df[col].median())
 
+
 if __name__=="__main__":
     credentials = load_credentials()
     connector = RDSDatabaseConnector(credentials)
