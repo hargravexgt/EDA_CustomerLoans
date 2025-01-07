@@ -8,6 +8,7 @@ import plotly.express as px
 from statsmodels.graphics.gofplots import qqplot
 from matplotlib import pyplot
 from scipy import stats
+import statsmodels.formula.api as smf
 
 def load_credentials(filepath='credentials.yaml'):
     with open(filepath, 'r') as file:
@@ -117,6 +118,10 @@ class DataFrameInfo:
     def col_skewness(self, df, col):
         return df[col].skew()
     
+    def regression(self, df, equation):
+        model0 = smf.ols(equation, df).fit()
+        model0.summary()
+
 class DataFrameTransformer:
 
     def impute_col_with_mean(self, df, col):
@@ -178,11 +183,23 @@ class Plotter:
         sns.pairplot(df)
 
     def corr_matrix(self, df):
-        sns.heatmap(df.corr(), annot=True, cmap='coolwarm')
+        px.imshow(df.select_dtypes(include='number').corr())
 
     def QQ_plot(self, df, col):
         qqplot(df[col] , scale=1 ,line='q', fit=True)
         pyplot.show()
+
+    def zscore_scatter(self, df, col):
+        from scipy.stats import zscore
+        df = df.copy()
+        df['z_score'] = zscore(df[col])
+        plt.scatter(df.index, df['z_score'])
+        plt.axhline(y=3, color='r', linestyle='--', label='Outlier Threshold (+3)')
+        plt.axhline(y=-3, color='r', linestyle='--', label='Outlier Threshold (-3)')
+        plt.title('Z-Scores to Identify Outliers')
+        plt.legend()
+        plt.show()
+        return df[df['z_score']>3]
 
 
 if __name__=="__main__":
