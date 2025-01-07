@@ -2,6 +2,12 @@ import yaml
 from sqlalchemy import create_engine, text
 import pandas as pd
 import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+import plotly.express as px
+from statsmodels.graphics.gofplots import qqplot
+from matplotlib import pyplot
+from scipy import stats
 
 def load_credentials(filepath='credentials.yaml'):
     with open(filepath, 'r') as file:
@@ -108,6 +114,9 @@ class DataFrameInfo:
             df = df[cols]
         return df.isnull().sum()/len(df)
     
+    def col_skewness(self, df, col):
+        return df[col].skew()
+    
 class DataFrameTransformer:
 
     def impute_col_with_mean(self, df, col):
@@ -115,6 +124,65 @@ class DataFrameTransformer:
     
     def impute_col_with_median(self, df, col):
         df[col] = df[col].fillna(df[col].median())
+
+    def log_transform(self, df, col):
+        log_col = df[f"{col}"].map(lambda i: np.log(i) if i > 0 else 0)
+        print(f'Skew of {col} after log transformation: {log_col.skew()}')
+        return log_col
+    
+    def box_cox_transform(self, df, col):
+        boxcox_col = df[f"{col}"]
+        boxcox_col= stats.boxcox(boxcox_col)
+        boxcox_col= pd.Series(boxcox_col[0])
+        print(f'Skew of {col} after Box-Cox transformation: {boxcox_col.skew()}')
+        return boxcox_col
+
+    def yeo_johnson_transform(self, df, col):
+        yeojohnson_col = df[f"{col}"]
+        yeojohnson_col = stats.yeojohnson(yeojohnson_col)
+        yeojohnson_col = pd.Series(yeojohnson_col[0])
+        print(f'Skew of {col} after Yeo-Johnson transformation: {yeojohnson_col.skew()}')
+        return yeojohnson_col
+    
+    def remove_n_largest(self, df, col, n):
+        largest_values = df[col].nlargest(n)
+        df_filtered = df[~df[col].isin(largest_values)]
+        return df_filtered
+
+class Plotter:
+
+    def kde_plot(self, df, cols):
+        for col in cols:
+            sns.histplot(data=df, x=col, kde=True)
+            plt.title(f"Histogram for {col}")
+            plt.show()
+
+    def hist_plot(self, df, cols):
+        df[f'{cols}'].hist(bins=20)
+
+    def box_whiskers_plot(self, df, cols):
+        for col in cols:
+            fig = px.box(df, y=col,width=600, height=500)
+            fig.show()
+
+    def pie_plot(self, df, cols):
+        for col in cols:
+            data = df[f'{col}'].value_counts()
+            fig = px.pie(values=data.values, names=data.index, title=f'Pie chart of {col}', width=600)
+            fig.show()
+
+    def scatter_plot(self, df, x, y):
+        sns.scatterplot(data=df, x="amount", y="age")
+
+    def pair_plot(self, df):
+        sns.pairplot(df)
+
+    def corr_matrix(self, df):
+        sns.heatmap(df.corr(), annot=True, cmap='coolwarm')
+
+    def QQ_plot(self, df, col):
+        qqplot(df[col] , scale=1 ,line='q', fit=True)
+        pyplot.show()
 
 
 if __name__=="__main__":
