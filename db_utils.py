@@ -120,7 +120,7 @@ class DataFrameInfo:
     
     def regression(self, df, equation):
         model0 = smf.ols(equation, df).fit()
-        model0.summary()
+        print(model0.summary())
 
 class DataFrameTransformer:
 
@@ -163,7 +163,7 @@ class Plotter:
             plt.show()
 
     def hist_plot(self, df, cols):
-        df[f'{cols}'].hist(bins=20)
+        df[cols].hist(bins=50)
 
     def box_whiskers_plot(self, df, cols):
         for col in cols:
