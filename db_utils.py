@@ -115,12 +115,20 @@ class DataFrameInfo:
             df = df[cols]
         return df.isnull().sum()/len(df)
     
+    def get_cols_with_nulls(self, df):
+        return [col for col in df.columns if df[col].isnull().any()]
+    
     def col_skewness(self, df, col):
         return df[col].skew()
     
     def regression(self, df, equation):
         model0 = smf.ols(equation, df).fit()
         print(model0.summary())
+
+    def logit_regression(self, df, equation):
+        model0 = smf.logit(equation, df).fit()
+        print(model0.summary())
+        
 
 class DataFrameTransformer:
 
@@ -137,6 +145,7 @@ class DataFrameTransformer:
     
     def box_cox_transform(self, df, col):
         boxcox_col = df[f"{col}"]
+        boxcox_col = boxcox_col.dropna()
         boxcox_col= stats.boxcox(boxcox_col)
         boxcox_col= pd.Series(boxcox_col[0])
         print(f'Skew of {col} after Box-Cox transformation: {boxcox_col.skew()}')
@@ -144,6 +153,7 @@ class DataFrameTransformer:
 
     def yeo_johnson_transform(self, df, col):
         yeojohnson_col = df[f"{col}"]
+        yeojohnson_col = yeojohnson_col.dropna()
         yeojohnson_col = stats.yeojohnson(yeojohnson_col)
         yeojohnson_col = pd.Series(yeojohnson_col[0])
         print(f'Skew of {col} after Yeo-Johnson transformation: {yeojohnson_col.skew()}')
